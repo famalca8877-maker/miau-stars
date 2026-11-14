@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>miau stars 🐾 — Sobrevive en la arena</title>
+<meta name="description" content="Miau Stars: juego web multijugador de supervivencia en arena 2D. 8 jugadores, 1 ganador. Hecho por Nicolás." />
+<style>
+  :root {
+    --bg: #14102b;
+    --bg2: #1f1845;
+    --panel: #231a55;
+    --line: #5a46c9;
+    --pink: #ff4f9a;
+    --cyan: #00e5ff;
+    --gold: #ffd23d;
+    --green: #5cf28f;
+    --text: #fff;
+    --muted: rgba(255, 255, 255, 0.72);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  a { color: var(--cyan); }
+
+  /* ---------- Héroe ---------- */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px 80px;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 28%, #3b2a8f, #14102b 72%);
+  }
+  .sun {
+    position: absolute;
+    top: 16%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(300px, 55vw);
+    height: min(300px, 55vw);
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ffd23d 0%, #ff4f9a 55%, #d92fb8 100%);
+    box-shadow: 0 0 120px rgba(255, 79, 154, 0.65), 0 0 60px rgba(0, 229, 255, 0.35);
+    opacity: 0.9;
+    z-index: 0;
+  }
+  .sun::after {
+    content: "";
+    position: absolute;
+    inset: 18% 0 auto 0;
+    height: 8%;
+    background: var(--bg);
+    box-shadow: 0 26px 0 var(--bg), 0 52px 0 var(--bg), 0 78px 0 var(--bg);
+  }
+  .grid {
+    position: absolute;
+    left: -50%;
+    right: -50%;
+    bottom: -12%;
+    height: 55%;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,229,255,0.28) 0 1px, transparent 1px 44px),
+      repeating-linear-gradient(0deg, rgba(0,229,255,0.28) 0 1px, transparent 1px 44px);
+    transform: perspective(480px) rotateX(62deg);
+    transform-origin: top center;
+    animation: grid-move 3.4s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes grid-move {
+    from { background-position: 0 0; }
+    to { background-position: 0 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .grid { animation: none; } }
+
+  .hero > * { position: relative; z-index: 1; }
+  .badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 2px solid var(--cyan);
+    color: var(--cyan);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    box-shadow: 0 0 18px rgba(0, 229, 255, 0.35);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(2.6rem, 9vw, 5.2rem);
+    letter-spacing: 2px;
+    line-height: 1;
+    text-shadow: 0 0 10px var(--pink), 0 0 34px var(--pink), 0 6px 0 #8c1f5c;
+  }
+  .tagline {
+    margin: 18px 0 8px;
+    font-size: clamp(1.05rem, 3vw, 1.45rem);
+    font-weight: 700;
+    color: var(--text);
+    text-shadow: 0 0 10px rgba(0,229,255,0.5);
+  }
+  .sub { margin: 0 0 30px; color: var(--muted); max-width: 560px; }
+  .cta { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    display: inline-block;
+    padding: 15px 34px;
+    border-radius: 14px;
+    border: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+  .btn:hover { filter: brightness(1.15); transform: translateY(-2px); }
+  .btn.primary { background: var(--pink); box-shadow: 0 0 24px rgba(255,79,154,0.5); }
+  .btn.ghost { background: transparent; border: 2px solid var(--cyan); color: var(--cyan); }
+
+  /* ---------- Secciones ---------- */
+  section { padding: 70px 20px; max-width: 1000px; margin: 0 auto; }
+  h2 {
+    margin: 0 0 10px;
+    font-size: clamp(1.7rem, 5vw, 2.3rem);
+    text-align: center;
+  }
+  .lead { text-align: center; color: var(--muted); margin: 0 0 40px; }
+
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 26px 20px;
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .card:hover { transform: translateY(-5px); border-color: var(--pink); box-shadow: 0 14px 34px rgba(255,79,154,0.22); }
+  .card .icon { font-size: 2.6rem; }
+  .card h3 { margin: 12px 0 6px; font-size: 1.15rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  .features { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .pill {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 12px 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pill .e { font-size: 1.2rem; }
+
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  .step { background: var(--panel); border-radius: 16px; padding: 24px 20px; border: 1px solid var(--line); }
+  .step .n {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--pink); font-weight: 800; margin-bottom: 10px;
+  }
+  .step p { margin: 0; color: var(--muted); }
+
+  .status {
+    background: linear-gradient(90deg, #7a2bd9, #d9347f);
+    border-radius: 16px;
+    padding: 26px 24px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(217, 52, 127, 0.4);
+  }
+  .status h3 { margin: 0 0 8px; }
+  .status p { margin: 0; color: rgba(255,255,255,0.9); }
+
+  footer {
+    text-align: center;
+    padding: 40px 20px 60px;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+  }
+  footer .heart { color: var(--pink); }
+
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--panel);
+    border: 2px solid var(--cyan);
+    color: var(--text);
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight: 700;
+    box-shadow: 0 0 20px rgba(0,229,255,0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 20;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="sun" aria-hidden="true"></div>
+    <div class="grid" aria-hidden="true"></div>
+
+    <span class="badge">🎮 En desarrollo</span>
+    <h1>🐾 miau stars</h1>
+    <p class="tagline">Sobrevive en la arena. 8 jugadores, 1 ganador.</p>
+    <p class="sub">Un juego web multijugador de supervivencia en arena 2D, con cuentas, avatares, tienda y modos de juego. Arte, personajes y nombres originales.</p>
+    <div class="cta">
+      <button class="btn primary" onclick="soon()">▶ Jugar</button>
+      <a class="btn ghost" href="#modos">Ver los modos ↓</a>
+    </div>
+  </header>
+
+  <section id="modos">
+    <h2>🎮 Modos de juego</h2>
+    <p class="lead">Cuatro formas de jugar, cada una con su propia arena y música.</p>
+    <div class="modes">
+      <div class="card">
+        <div class="icon">🏟️</div>
+        <h3>Arena</h3>
+        <p>8 jugadores reales. La zona roja se cierra y daña: sé el último en pie.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🧱</div>
+        <h3>7 Pisos</h3>
+        <p>Una torre de bloques que se desmoronan bajo tus pies. ¡No caigas!</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔥</div>
+        <h3>Jefe de Fuego</h3>
+        <p>3 jugadores contra un jefe gigante de lava que ríe, ruge y escupe fuego.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚽</div>
+        <h3>Fútbol 3vs3</h3>
+        <p>Dos equipos, 2 minutos, una pelota que rebota. ¡A meter goles!</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>✨ Qué hay dentro</h2>
+    <p class="lead">Mucho más que disparar: colecciona, compra y personaliza.</p>
+    <div class="features">
+      <span class="pill"><span class="e">🐱</span> 12 avatares con estela y voz propias</span>
+      <span class="pill"><span class="e">⚔️</span> 10 personajes con estilos únicos</span>
+      <span class="pill"><span class="e">🛒</span> Tienda y créditos</span>
+      <span class="pill"><span class="e">🎡</span> Ruleta de la Suerte</span>
+      <span class="pill"><span class="e">🎨</span> Crea tu propio avatar</span>
+      <span class="pill"><span class="e">📅</span> Eventos especiales por día y hora</span>
+      <span class="pill"><span class="e">🎵</span> Música y sonidos originales</span>
+      <span class="pill"><span class="e">🧪</span> Modo Prueba contra bots</span>
+      <span class="pill"><span class="e">👤</span> Cuentas y progresión</span>
+      <span class="pill"><span class="e">📱</span> Controles táctiles en celular</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>🕹️ Cómo se juega</h2>
+    <p class="lead">Es fácil: entra, elige y sobrevive.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <p>Crea tu cuenta y elige tu <b>avatar</b> 🐾 y tu <b>personaje</b> ⚔️ (cada uno con vida, velocidad y disparo distintos).</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <p><b>WASD / flechas</b> para moverte · <b>ratón</b> para apuntar · <b>clic o espacio</b> para disparar.</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <p>Huye de la <b>zona roja</b> que se cierra y daña. Gana créditos 💰 y compra avatares, personajes y la Ruleta.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="status">
+      <h3>🚀 Próximamente</h3>
+      <p>El servidor se está preparando. Muy pronto podrás jugar en línea contra otros gatos de verdad.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>Hecho con <span class="heart">❤</span> por <b>Nicolás</b> · Arte, personajes y nombres originales.</p>
+    <p>miau stars 🐾 · Sobrevive en la arena.</p>
+  </footer>
+
+  <div id="toast" role="status">🎉 ¡El juego llegará muy pronto!</div>
+
+<script>
+  let toastTimer;
+  function soon() {
+    const t = document.getElementById("toast");
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+</script>
+</body>
+</html>
